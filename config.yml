@@ -1,0 +1,8 @@
+trainer:
+  num_train_epochs: 5
+  learning_rate: 8.521786512851659e-05
+  train_batch_size: 8
+  eval_batch_size: 24
+  max_seq_length: 512
+  output_dir: "outputs/"
+  overwrite_output_dir: True
