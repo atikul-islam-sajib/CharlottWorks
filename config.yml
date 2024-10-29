@@ -6,3 +6,4 @@ trainer:
   max_seq_length: 512
   output_dir: "outputs/"
   overwrite_output_dir: True
+  device: "cuda"
