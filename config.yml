@@ -1,8 +1,8 @@
 path: 
-    train_path: './data/ground_truth_train.csv',
-    test_path: './data/ground_truth_test.csv',
-    output_dir: './data/processed'
-    
+  train_path: './data/ground_truth_train.csv'
+  test_path: './data/ground_truth_test.csv'
+  output_dir: './data/processed'
+
 trainer:
   num_train_epochs: 5
   learning_rate: 8.521786512851659e-05

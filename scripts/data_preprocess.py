@@ -1,6 +1,12 @@
 import os
-import pandas as pd
 import re
+import sys
+import argparse
+import pandas as pd
+
+sys.path.append("./scripts")
+
+from utils import config
 
 
 class DataProcessor:
@@ -98,12 +104,36 @@ class DataProcessor:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Data Preprocessing for the SDG-Event-Classification Task".title()
+    )
+    parser.add_argument(
+        "--train_path",
+        type=str,
+        default=config()["path"]["train_path"],
+        help="Path to the training data".capitalize(),
+    )
+    parser.add_argument(
+        "--test_path",
+        type=str,
+        default=config()["path"]["test_path"],
+        help="Path to the test data".capitalize(),
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default=config()["path"]["output_dir"],
+        help="Path to save the processed data".capitalize(),
+    )
+    
+    args = parser.parse_args()
+    
     processor = DataProcessor(
-        train_path='../data/ground_truth_train.csv',
-        test_path='../data/ground_truth_test.csv',
-        output_dir='../data/processed'
+        train_path=args.train_path,
+        test_path=args.test_path,
+        output_dir=config()["trainer"]["output_dir"],
     )
 
     processor.run_preprocessing()
+    
     X_train, y_train, X_test, y_test = processor.get_data_splits()
-
