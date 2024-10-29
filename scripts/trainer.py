@@ -152,8 +152,8 @@ class Trainer:
 
             # Create a ClassificationModel
             model = ClassificationModel(
-                "roberta",
-                "roberta-base",
+                self.select_the_model()["type"],
+                self.select_the_model()["base"],
                 num_labels=self.num_labels,
                 args=self.model_args,
                 use_cuda=self.use_cuda,
@@ -232,8 +232,8 @@ class Trainer:
 
         # Create a ClassificationModel
         model = ClassificationModel(
-            "roberta",
-            "roberta-base",
+            self.select_the_model()["type"],
+            self.select_the_model()["base"],
             num_labels=self.num_labels,
             args=self.model_args,
             use_cuda=self.use_cuda,
