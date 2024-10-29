@@ -11,5 +11,3 @@ def device_init(self, device: str = "cuda"):
         self.device = torch.device("cuda")
     else:
         self.device = torch.device("cpu")
-        
-config()["path"]
