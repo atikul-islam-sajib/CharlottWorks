@@ -12,3 +12,4 @@ trainer:
   output_dir: "outputs/"
   overwrite_output_dir: True
   device: "cuda"
+  use_kfold: False

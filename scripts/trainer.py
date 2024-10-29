@@ -1,37 +1,254 @@
-from simpletransformers.classification import ClassificationModel, ClassificationArgs
+# from simpletransformers.classification import ClassificationModel, ClassificationArgs
+# import pandas as pd
+# import re
+# from sklearn.model_selection import GroupShuffleSplit
+# import torch
+# from sklearn.metrics import (
+#     mean_squared_error,
+#     f1_score,
+#     accuracy_score,
+#     classification_report,
+#     confusion_matrix,
+# )
+# import optuna
+# import seaborn as sns
+# import matplotlib.pyplot as plt
+# import os
+# import json
+
+
+# class Trainer:
+#     def __init__(
+#         self,
+#         num_train_epochs: int = 5,
+#         learning_rate: float = 8.521786512851659e-05,
+#         train_batch_size: int = 8,
+#         eval_batch_size: int = 24,
+#         max_seq_length: int = 512,
+#         output_dir: str = "outputs/",
+#         overwrite_output_dir: bool = True,
+#     ):
+#         self.num_train_epochs = num_train_epochs
+#         self.learning_rate = learning_rate
+#         self.train_batch_size = train_batch_size
+#         self.eval_batch_size = eval_batch_size
+#         self.max_seq_length = max_seq_length
+#         self.output_dir = output_dir
+#         self.overwrite_output_dir = overwrite_output_dir
+
+
+# Import necessary libraries
 import pandas as pd
-import re
-from sklearn.model_selection import GroupShuffleSplit
-import torch
-from sklearn.metrics import (
-    mean_squared_error,
-    f1_score,
-    accuracy_score,
-    classification_report,
-    confusion_matrix,
-)
-import optuna
-import seaborn as sns
-import matplotlib.pyplot as plt
+import numpy as np
 import os
 import json
+from sklearn.model_selection import KFold
+from sklearn.metrics import classification_report, confusion_matrix
+import seaborn as sns
+import matplotlib.pyplot as plt
+from simpletransformers.classification import ClassificationModel, ClassificationArgs
+import torch
+import argparse
+
+import sys
+sys.path.append("./scripts")
+
+from utils import config, device_init
 
 
 class Trainer:
     def __init__(
         self,
-        num_train_epochs: int = 5,
-        learning_rate: float = 8.521786512851659e-05,
-        train_batch_size: int = 8,
-        eval_batch_size: int = 24,
-        max_seq_length: int = 512,
-        output_dir: str = "outputs/",
-        overwrite_output_dir: bool = True,
+        num_train_epochs=5,
+        learning_rate=8.521786512851659e-05,
+        train_batch_size=8,
+        eval_batch_size=24,
+        max_seq_length=512,
+        output_dir="outputs/",
+        overwrite_output_dir=True,
+        device="cuda",
+        use_kfold=False,
+        n_splits=5,
+        random_state=42,
     ):
-        self.num_train_epochs = num_train_epochs
-        self.learning_rate = learning_rate
-        self.train_batch_size = train_batch_size
-        self.eval_batch_size = eval_batch_size
-        self.max_seq_length = max_seq_length
-        self.output_dir = output_dir
-        self.overwrite_output_dir = overwrite_output_dir
+        self.model_args = ClassificationArgs()
+        self.model_args.num_train_epochs = num_train_epochs
+        self.model_args.learning_rate = learning_rate
+        self.model_args.train_batch_size = train_batch_size
+        self.model_args.eval_batch_size = eval_batch_size
+        self.model_args.max_seq_length = max_seq_length
+        self.model_args.output_dir = output_dir
+        self.model_args.overwrite_output_dir = overwrite_output_dir
+
+        self.device = device
+        self.use_cuda = device_init(device=device)
+        self.use_kfold = use_kfold
+        self.n_splits = n_splits
+        self.random_state = random_state
+
+    def train(self, df_train, df_test=None):
+        # Ensure that df_train contains 'text' and 'label' columns
+        assert (
+            "text" in df_train.columns and "label" in df_train.columns
+        ), "df_train must contain 'text' and 'label' columns."
+
+        # Encode labels if they are not integers
+        if df_train["label"].dtype not in [np.int64, np.int32]:
+            df_train["label"], uniques = pd.factorize(df_train["label"])
+            label_mapping = dict(enumerate(uniques))
+        else:
+            labels = df_train["label"].unique()
+            labels.sort()
+            label_mapping = {label: str(label) for label in labels}
+
+        self.label_mapping = label_mapping
+        self.num_labels = len(label_mapping)
+
+        # Create results directory
+        os.makedirs("results", exist_ok=True)
+
+        if self.use_kfold:
+            self._kfold_training(df_train)
+        else:
+            self._normal_training(df_train, df_test)
+
+    def _kfold_training(self, df_train):
+        kf = KFold(n_splits=self.n_splits, shuffle=True, random_state=self.random_state)
+        all_predictions = []
+        all_true_labels = []
+        fold = 1
+
+        for train_index, val_index in kf.split(df_train):
+            print(f"Fold {fold}")
+            train_data = df_train.iloc[train_index]
+            val_data = df_train.iloc[val_index]
+
+            # Update output directory for each fold
+            self.model_args.output_dir = f"outputs/fold_{fold}/"
+
+            # Create a ClassificationModel
+            model = ClassificationModel(
+                "roberta",
+                "roberta-base",
+                num_labels=self.num_labels,
+                args=self.model_args,
+                use_cuda=self.use_cuda,
+            )
+
+            # Train the model
+            model.train_model(train_data[["text", "label"]])
+
+            # Predict on validation set
+            val_texts = val_data["text"].tolist()
+            val_labels = val_data["label"].tolist()
+            predictions, raw_outputs = model.predict(val_texts)
+
+            # Append results
+            all_predictions.extend(predictions)
+            all_true_labels.extend(val_labels)
+
+            # Save classification report
+            report = classification_report(
+                val_labels, predictions, target_names=self.label_mapping.values()
+            )
+            with open(f"results/classification_report_fold_{fold}.txt", "w") as f:
+                f.write(report)
+
+            # Plot confusion matrix
+            self._plot_confusion_matrix(
+                val_labels,
+                predictions,
+                f"Confusion Matrix - Fold {fold}",
+                f"results/confusion_matrix_fold_{fold}",
+            )
+
+            fold += 1
+
+        # Save overall classification report
+        overall_report = classification_report(
+            all_true_labels, all_predictions, target_names=self.label_mapping.values()
+        )
+        with open("results/classification_report_overall.txt", "w") as f:
+            f.write(overall_report)
+
+        # Plot overall confusion matrix
+        self._plot_confusion_matrix(
+            all_true_labels,
+            all_predictions,
+            "Confusion Matrix - Cross-Validation",
+            "results/confusion_matrix_overall",
+        )
+
+    def _normal_training(self, df_train, df_test):
+        # Update output directory
+        self.model_args.output_dir = self.model_args.output_dir
+
+        # Create a ClassificationModel
+        model = ClassificationModel(
+            "roberta",
+            "roberta-base",
+            num_labels=self.num_labels,
+            args=self.model_args,
+            use_cuda=self.use_cuda,
+        )
+
+        # Train the model
+        model.train_model(df_train[["text", "label"]])
+
+        # Predict on test set
+        if df_test is not None:
+            assert (
+                "text" in df_test.columns and "label" in df_test.columns
+            ), "df_test must contain 'text' and 'label' columns."
+            test_texts = df_test["text"].tolist()
+            test_labels = df_test["label"].tolist()
+            predictions, raw_outputs = model.predict(test_texts)
+
+            # Save classification report
+            report = classification_report(
+                test_labels, predictions, target_names=self.label_mapping.values()
+            )
+            with open("results/classification_report_test_set.txt", "w") as f:
+                f.write(report)
+
+            # Plot confusion matrix
+            self._plot_confusion_matrix(
+                test_labels,
+                predictions,
+                "Confusion Matrix - Test Set",
+                "results/confusion_matrix_test_set",
+            )
+
+    def _plot_confusion_matrix(self, true_labels, predictions, title, filename):
+        cm = confusion_matrix(true_labels, predictions)
+        cm_df = pd.DataFrame(
+            cm, index=self.label_mapping.values(), columns=self.label_mapping.values()
+        )
+
+        sns.set(context="paper", font_scale=1.7)
+        plt.figure(figsize=(10, 7))
+        sns.heatmap(cm_df, annot=True, fmt="g", cmap="Blues")
+        plt.title(title)
+        plt.ylabel("Actual Labels")
+        plt.xlabel("Predicted Labels")
+
+        plt.savefig(f"{filename}.png", format="png", bbox_inches="tight")
+        plt.savefig(f"{filename}.pdf", format="pdf", bbox_inches="tight")
+        plt.close()
+
+    def save_model_args(self):
+        # Save model arguments to a JSON file
+        model_args_dict = {
+            "learning_rate": self.model_args.learning_rate,
+            "num_train_epochs": self.model_args.num_train_epochs,
+            "train_batch_size": self.model_args.train_batch_size,
+            "eval_batch_size": self.model_args.eval_batch_size,
+            "max_seq_length": self.model_args.max_seq_length,
+        }
+
+        with open("results/model_args.json", "w") as f:
+            json.dump(model_args_dict, f, indent=4)
+            
+            
+if __name__ == "__main__":
+    
