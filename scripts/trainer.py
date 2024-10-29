@@ -313,7 +313,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--use_kfold",
-        action='store_true',
+        default=config()["trainer"]["use_kfold"],
         help="Use k-fold cross-validation",
     )
     parser.add_argument(
