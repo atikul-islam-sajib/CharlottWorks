@@ -1,5 +1,8 @@
+import sys
 import yaml
 import torch
+
+sys.path.append("./scripts/")
 
 def config():
     with open("./config.yml", "r") as file:
