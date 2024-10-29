@@ -1,16 +1,16 @@
-path: 
-  train_path: './data/ground_truth_train.csv'
-  test_path: './data/ground_truth_test.csv'
-  output_dir: './data/processed'
+path:
+  train_path: './data/ground_truth_train.csv'  # Path to the training data CSV file
+  test_path: './data/ground_truth_test.csv'    # Path to the test data CSV file
+  output_dir: './data/processed'               # Directory to save processed data
 
 trainer:
-  num_train_epochs: 1
-  learning_rate: 8.521786512851659e-05
-  train_batch_size: 8
-  eval_batch_size: 24
-  max_seq_length: 512
-  output_dir: "outputs/"
-  overwrite_output_dir: True
-  device: "cpu"
-  use_kfold: False
-  n_splits: 5
+  num_train_epochs: 1                          # Number of training epochs
+  learning_rate: 8.521786512851659e-05         # Learning rate for the optimizer
+  train_batch_size: 8                          # Batch size for training
+  eval_batch_size: 24                          # Batch size for evaluation
+  max_seq_length: 512                          # Maximum sequence length for model inputs
+  output_dir: "outputs/"                       # Directory to save model outputs
+  overwrite_output_dir: True                   # Overwrite contents of the output directory if it exists
+  device: "cuda"                               # Device to use for training ('cuda' for GPU, "cpu" for CPU) 
+  use_kfold: False                             # Whether to use K-Fold cross-validation
+  n_splits: 5                                  # Number of folds for K-Fold cross-validation
