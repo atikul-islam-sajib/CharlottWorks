@@ -17,23 +17,23 @@ trainer:
 
 
 models:
-  albert: False
-  bert: False
-  bertweet: False
-  bigbird: False
-  camembert: False
-  deberta: False
-  distilbert: False
-  electra: False
-  flaubert: False
-  herbert: False
-  layoutlm: False
-  layoutlmv2: False
-  longformer: False
-  mpnet: False
-  rembert: False
-  roberta: False
-  squeezebert: False
-  xlm: False
-  xlmroberta: False
-  xlnet: False
+  albert: False                                # Albert model
+  bert: False                                  # BERT model
+  bertweet: False                              # BERTweet model
+  bigbird: False                               # BigBird model
+  camembert: False                             # CamemBERT model
+  deberta: False                               # DeBERTa model
+  distilbert: False                            # DistilBERT model
+  electra: False                               # ELECTRA model
+  flaubert: False                              # FlauBERT model
+  herbert: False                               # HerBERT model
+  layoutlm: False                              # LayoutLM model
+  layoutlmv2: False                            # LayoutLMv2 model
+  longformer: False                            # Longformer model
+  mpnet: False                                 # MPNet model
+  rembert: False                               # Reformer model
+  roberta: False                               # RoBERTa model
+  squeezebert: False                           # SqueezeBERT model
+  xlm: False                                   # XLM model
+  xlmroberta: False                            # XLM-RoBERTa model
+  xlnet: False                                 # XLNet model
