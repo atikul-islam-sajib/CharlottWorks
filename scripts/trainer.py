@@ -329,4 +329,12 @@ if __name__ == "__main__":
         n_splits=args.n_splits,
     )
 
+    df_train = "./data/processed/processed_train.csv"
+    df_test = "./data/processed/processed_test.csv"
+    
     trainer.train(df_train)
+    trainer.save_model_args()
+    
+    
+
+    
