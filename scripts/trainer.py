@@ -11,6 +11,12 @@ from simpletransformers.classification import ClassificationModel, Classificatio
 import argparse
 import sys
 
+import warnings
+
+# Suppress FutureWarning messages
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+
 sys.path.append("./scripts")
 from utils import config, device_init
 
@@ -302,7 +308,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--overwrite_output_dir",
-        action='store_true',
+        default=config()["trainer"]["overwrite_output_dir"],
         help="Overwrite the output directory",
     )
     parser.add_argument(
