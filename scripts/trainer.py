@@ -92,7 +92,7 @@ class Trainer:
         best_model = None
 
         for train_index, val_index in kf.split(df_train):
-            print(f"############################ Fold ############################ {fold}\n\n")
+            print(f"############################ Fold - {fold} ############################ \n\n")
             train_data = df_train.iloc[train_index].reset_index(drop=True)
             val_data = df_train.iloc[val_index].reset_index(drop=True)
 
