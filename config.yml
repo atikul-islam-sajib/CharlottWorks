@@ -14,3 +14,27 @@ trainer:
   device: "cuda"                               # Device to use for training ('cuda' for GPU, "cpu" for CPU) 
   use_kfold: False                             # Whether to use K-Fold cross-validation
   n_splits: 5                                  # Number of folds for K-Fold cross-validation
+
+
+models:
+  albert: False
+  bert: False
+  bertweet: False
+  bigbird: False
+  camembert: False
+  deberta: False
+  distilbert: False
+  electra: False
+  flaubert: False
+  herbert: False
+  layoutlm: False
+  layoutlmv2: False
+  longformer: False
+  mpnet: False
+  mobilebert: False
+  rembert: False
+  roberta: False
+  squeezebert: False
+  xlm: False
+  xlmroberta: False
+  xlnet: False

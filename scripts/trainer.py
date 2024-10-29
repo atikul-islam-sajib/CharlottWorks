@@ -35,6 +35,7 @@ class Trainer:
         use_kfold=False,
         n_splits=5,
         random_state=42,
+        model_type="roberta"
     ):
         self.model_args = ClassificationArgs()
         self.model_args.num_train_epochs = num_train_epochs
@@ -50,6 +51,56 @@ class Trainer:
         self.use_kfold = use_kfold
         self.n_splits = n_splits
         self.random_state = random_state
+        self.model_type = model_type
+        
+        
+    def select_the_model(self):
+        if self.model_type == config()["models"]["albert"]:
+            return {"type": "albert", "base": "albert-base-v2"}  # Confirmed: "albert-base-v2" is typical
+        elif self.model_type == config()["models"]["bert"]:
+            return {"type": "bert", "base": "bert-base-uncased"}  # Confirmed: "bert-base-uncased" is typical
+        elif self.model_type == config()["models"]["bertweet"]:
+            return {"type": "bertweet", "base": "vinai/bertweet-base"}  # Confirmed
+        elif self.model_type == config()["models"]["bigbird"]:
+            return {"type": "bigbird", "base": "google/bigbird-roberta-base"}  # Confirmed
+        elif self.model_type == config()["models"]["camembert"]:
+            return {"type": "camembert", "base": "camembert-base"}  # Confirmed
+        elif self.model_type == config()["models"]["deberta"]:
+            return {"type": "deberta", "base": "microsoft/deberta-base"}  # Confirmed
+        elif self.model_type == config()["models"]["distilbert"]:
+            return {"type": "distilbert", "base": "distilbert-base-uncased"}  # Confirmed
+        elif self.model_type == config()["models"]["electra"]:
+            return {"type": "electra", "base": "google/electra-base-discriminator"}  # Confirmed
+        elif self.model_type == config()["models"]["flaubert"]:
+            return {"type": "flaubert", "base": "flaubert/flaubert-base-cased"}  # Confirmed
+        elif self.model_type == config()["models"]["herbert"]:
+            return {"type": "herbert", "base": "allegro/herbert-klej-cased-tokenizer-v1"}  # Verified name is "allegro/herbert-klej-cased-tokenizer-v1"
+        elif self.model_type == config()["models"]["layoutlm"]:
+            return {"type": "layoutlm", "base": "microsoft/layoutlm-base-uncased"}  # Confirmed
+        elif self.model_type == config()["models"]["layoutlmv2"]:
+            return {"type": "layoutlmv2", "base": "microsoft/layoutlmv2-base-uncased"}  # Confirmed
+        elif self.model_type == config()["models"]["longformer"]:
+            return {"type": "longformer", "base": "allenai/longformer-base-4096"}  # Confirmed
+        elif self.model_type == config()["models"]["mpnet"]:
+            return {"type": "mpnet", "base": "microsoft/mpnet-base"}  # Confirmed
+        elif self.model_type == config()["models"]["mobilebert"]:
+            return {"type": "mobilebert", "base": "google/mobilebert-uncased"}  # Confirmed
+        elif self.model_type == config()["models"]["rembert"]:
+            return {"type": "rembert", "base": "google/rembert"}  # Confirmed
+        elif self.model_type == config()["models"]["roberta"]:
+            return {"type": "roberta", "base": "roberta-base"}  # Confirmed
+        elif self.model_type == config()["models"]["squeezebert"]:
+            return {"type": "squeezebert", "base": "squeezebert/squeezebert-uncased"}  # Confirmed: "squeezebert/squeezebert-uncased"
+        elif self.model_type == config()["models"]["xlm"]:
+            return {"type": "xlm", "base": "xlm-roberta-base"}  # Confirmed
+        elif self.model_type == config()["models"]["xlmroberta"]:
+            return {"type": "xlmroberta", "base": "xlm-roberta-base"}  # Confirmed
+        elif self.model_type == config()["models"]["xlnet"]:
+            return {"type": "xlnet", "base": "xlnet-base-cased"}  # Confirmed
+        else:
+            raise ValueError(f"Unknown model type: {self.model_type}")
+
+        
 
     def train(self, df_train, df_test=None):
         # Ensure that df_train contains 'text' and 'labels' columns
@@ -92,7 +143,7 @@ class Trainer:
         best_model = None
 
         for train_index, val_index in kf.split(df_train):
-            print(f"############################ Fold - {fold} ############################ \n\n")
+            print(f"\n\n############################ Fold - {fold} ############################ \n\n")
             train_data = df_train.iloc[train_index].reset_index(drop=True)
             val_data = df_train.iloc[val_index].reset_index(drop=True)
 
