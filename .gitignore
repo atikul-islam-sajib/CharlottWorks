@@ -1,5 +1,80 @@
-.venv
+# Virtual environment directories
+.venv/
 .env
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-scripts/llm_annotation/prompts/__pycache__/
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# mypy cache
+.mypy_cache/
+
+# Pytest cache
+.pytest_cache/
+
+# Cython debug symbols
+cython_debug/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Output directories
 scripts/outputs
+scripts/llm_annotation/prompts/__pycache__/
+
+# Logs and debug files
+*.log
+*.out
+*.err
+
+# MacOS files
+.DS_Store
+
+# Windows files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Visual Studio Code settings
+.vscode/
+
+# IntelliJ IDEA settings
+.idea/
+
+# Coverage reports
+htmlcov/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+
+# Build directories
+build/
+dist/
+*.egg-info/
+
+# Profiling data
+.prof
+
+# Temporary files
+*.swp
+.sass-cache/
+*.tmp
+*.temp
+
+# Anaconda environments
+.conda/
+
+# Other ignored files
+*.bak
+*.orig
+
+# Custom ignores
+# Add any additional files or directories below
