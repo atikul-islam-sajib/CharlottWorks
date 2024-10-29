@@ -39,10 +39,6 @@ class Trainer:
         self.model_args.output_dir = output_dir
         self.model_args.overwrite_output_dir = overwrite_output_dir
 
-        # Specify the label column name
-        self.model_args.labels_column = "label"
-        self.model_args.regression = False  # Ensure we're doing classification
-
         self.device = device
         self.use_cuda = device_init(device=device)
         self.use_kfold = use_kfold
@@ -50,17 +46,17 @@ class Trainer:
         self.random_state = random_state
 
     def train(self, df_train, df_test=None):
-        # Ensure that df_train contains 'text' and 'label' columns
+        # Ensure that df_train contains 'text' and 'labels' columns
         assert (
-            "text" in df_train.columns and "label" in df_train.columns
-        ), "df_train must contain 'text' and 'label' columns."
+            "text" in df_train.columns and "labels" in df_train.columns
+        ), "df_train must contain 'text' and 'labels' columns."
 
         # Encode labels if they are not integers
-        if df_train["label"].dtype not in [np.int64, np.int32, int]:
-            df_train["label"], uniques = pd.factorize(df_train["label"])
+        if df_train["labels"].dtype not in [np.int64, np.int32, int]:
+            df_train["labels"], uniques = pd.factorize(df_train["labels"])
             label_mapping = dict(enumerate(uniques))
         else:
-            labels = df_train["label"].unique()
+            labels = df_train["labels"].unique()
             labels.sort()
             label_mapping = {label: str(label) for label in labels}
 
@@ -111,7 +107,7 @@ class Trainer:
 
             # Predict on validation set
             val_texts = val_data["text"].tolist()
-            val_labels = val_data["label"].tolist()
+            val_labels = val_data["labels"].tolist()
             predictions, raw_outputs = model.predict(val_texts)
 
             # Append results
@@ -198,23 +194,23 @@ class Trainer:
 
     def _evaluate_on_test_set(self, model, df_test):
         assert (
-            "text" in df_test.columns and "label" in df_test.columns
-        ), "df_test must contain 'text' and 'label' columns."
+            "text" in df_test.columns and "labels" in df_test.columns
+        ), "df_test must contain 'text' and 'labels' columns."
 
         # If labels are not numeric, map using the label_mapping
-        if df_test["label"].dtype not in [np.int64, np.int32, int]:
-            df_test["label"] = df_test["label"].map(
+        if df_test["labels"].dtype not in [np.int64, np.int32, int]:
+            df_test["labels"] = df_test["labels"].map(
                 {v: int(k) for k, v in self.label_mapping.items()}
             )
-            df_test["label"] = df_test["label"].fillna(-1).astype(int)
-            if -1 in df_test["label"].values:
+            df_test["labels"] = df_test["labels"].fillna(-1).astype(int)
+            if -1 in df_test["labels"].values:
                 raise ValueError("Some labels in df_test are not in the training label mapping.")
         else:
             # Ensure labels are integers
-            df_test["label"] = df_test["label"].astype(int)
+            df_test["labels"] = df_test["labels"].astype(int)
 
         test_texts = df_test["text"].tolist()
-        test_labels = df_test["label"].tolist()
+        test_labels = df_test["labels"].tolist()
         predictions, raw_outputs = model.predict(test_texts)
 
         # Save classification report
@@ -346,11 +342,15 @@ if __name__ == "__main__":
     df_train = pd.read_csv("./data/processed/processed_train.csv")
     df_test = pd.read_csv("./data/processed/processed_test.csv")
 
+    # Rename 'label' column to 'labels'
+    df_train = df_train.rename(columns={"label": "labels"})
+    df_test = df_test.rename(columns={"label": "labels"})
+
     # Ensure that the DataFrames have the necessary columns
-    assert "text" in df_train.columns and "label" in df_train.columns, \
-        "df_train must contain 'text' and 'label' columns."
-    assert "text" in df_test.columns and "label" in df_test.columns, \
-        "df_test must contain 'text' and 'label' columns."
+    assert "text" in df_train.columns and "labels" in df_train.columns, \
+        "df_train must contain 'text' and 'labels' columns."
+    assert "text" in df_test.columns and "labels" in df_test.columns, \
+        "df_test must contain 'text' and 'labels' columns."
 
     trainer.train(df_train, df_test)
     trainer.save_model_args()
