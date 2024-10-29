@@ -14,7 +14,7 @@ from simpletransformers.classification import ClassificationModel, Classificatio
 
 import warnings
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 sys.path.append("./scripts")
@@ -35,7 +35,7 @@ class Trainer:
         use_kfold=False,
         n_splits=5,
         random_state=42,
-        model_type="roberta"
+        model_type="roberta",
     ):
         self.model_args = ClassificationArgs()
         self.model_args.num_train_epochs = num_train_epochs
@@ -52,55 +52,130 @@ class Trainer:
         self.n_splits = n_splits
         self.random_state = random_state
         self.model_type = model_type
-        
-        
+
     def select_the_model(self):
-        if self.model_type == config()["models"]["albert"]:
-            return {"type": "albert", "base": "albert-base-v2"}  # Confirmed: "albert-base-v2" is typical
-        elif self.model_type == config()["models"]["bert"]:
-            return {"type": "bert", "base": "bert-base-uncased"}  # Confirmed: "bert-base-uncased" is typical
-        elif self.model_type == config()["models"]["bertweet"]:
-            return {"type": "bertweet", "base": "vinai/bertweet-base"}  # Confirmed
-        elif self.model_type == config()["models"]["bigbird"]:
-            return {"type": "bigbird", "base": "google/bigbird-roberta-base"}  # Confirmed
-        elif self.model_type == config()["models"]["camembert"]:
-            return {"type": "camembert", "base": "camembert-base"}  # Confirmed
-        elif self.model_type == config()["models"]["deberta"]:
-            return {"type": "deberta", "base": "microsoft/deberta-base"}  # Confirmed
-        elif self.model_type == config()["models"]["distilbert"]:
-            return {"type": "distilbert", "base": "distilbert-base-uncased"}  # Confirmed
-        elif self.model_type == config()["models"]["electra"]:
-            return {"type": "electra", "base": "google/electra-base-discriminator"}  # Confirmed
-        elif self.model_type == config()["models"]["flaubert"]:
-            return {"type": "flaubert", "base": "flaubert/flaubert-base-cased"}  # Confirmed
-        elif self.model_type == config()["models"]["herbert"]:
-            return {"type": "herbert", "base": "allegro/herbert-klej-cased-tokenizer-v1"}  # Verified name is "allegro/herbert-klej-cased-tokenizer-v1"
-        elif self.model_type == config()["models"]["layoutlm"]:
-            return {"type": "layoutlm", "base": "microsoft/layoutlm-base-uncased"}  # Confirmed
-        elif self.model_type == config()["models"]["layoutlmv2"]:
-            return {"type": "layoutlmv2", "base": "microsoft/layoutlmv2-base-uncased"}  # Confirmed
-        elif self.model_type == config()["models"]["longformer"]:
-            return {"type": "longformer", "base": "allenai/longformer-base-4096"}  # Confirmed
-        elif self.model_type == config()["models"]["mpnet"]:
-            return {"type": "mpnet", "base": "microsoft/mpnet-base"}  # Confirmed
-        elif self.model_type == config()["models"]["mobilebert"]:
-            return {"type": "mobilebert", "base": "google/mobilebert-uncased"}  # Confirmed
-        elif self.model_type == config()["models"]["rembert"]:
-            return {"type": "rembert", "base": "google/rembert"}  # Confirmed
-        elif self.model_type == config()["models"]["roberta"]:
-            return {"type": "roberta", "base": "roberta-base"}  # Confirmed
-        elif self.model_type == config()["models"]["squeezebert"]:
-            return {"type": "squeezebert", "base": "squeezebert/squeezebert-uncased"}  # Confirmed: "squeezebert/squeezebert-uncased"
-        elif self.model_type == config()["models"]["xlm"]:
-            return {"type": "xlm", "base": "xlm-roberta-base"}  # Confirmed
-        elif self.model_type == config()["models"]["xlmroberta"]:
-            return {"type": "xlmroberta", "base": "xlm-roberta-base"}  # Confirmed
-        elif self.model_type == config()["models"]["xlnet"]:
-            return {"type": "xlnet", "base": "xlnet-base-cased"}  # Confirmed
+        if config()["models"]["albert"]:
+            return {
+                "type": "albert",
+                "base": "albert-base-v2",
+                "model": "ALBERT",
+            }  # Confirmed: "albert-base-v2" is typical
+        elif config()["models"]["bert"]:
+            return {
+                "type": "bert",
+                "base": "bert-base-uncased",
+                "model": "BERT",
+            }  # Confirmed: "bert-base-uncased" is typical
+        elif config()["models"]["bertweet"]:
+            return {
+                "type": "bertweet",
+                "base": "vinai/bertweet-base",
+                "model": "BERTWEET",
+            }  # Confirmed
+        elif config()["models"]["bigbird"]:
+            return {
+                "type": "bigbird",
+                "base": "google/bigbird-roberta-base",
+                "model": "BIGBIRD",
+            }  # Confirmed
+        elif config()["models"]["camembert"]:
+            return {
+                "type": "camembert",
+                "base": "camembert-base",
+                "model": "CAMEMBERT",
+            }  # Confirmed
+        elif config()["models"]["deberta"]:
+            return {
+                "type": "deberta",
+                "base": "microsoft/deberta-base",
+                "model": "DEBERTA",
+            }  # Confirmed
+        elif config()["models"]["distilbert"]:
+            return {
+                "type": "distilbert",
+                "base": "distilbert-base-uncased",
+                "model": "DISTILBERT",
+            }  # Confirmed
+        elif config()["models"]["electra"]:
+            return {
+                "type": "electra",
+                "base": "google/electra-base-discriminator",
+                "model": "ELECTRA",
+            }  # Confirmed
+        elif config()["models"]["flaubert"]:
+            return {
+                "type": "flaubert",
+                "base": "flaubert/flaubert-base-cased",
+                "model": "FLAUBERT",
+            }  # Confirmed
+        elif config()["models"]["herbert"]:
+            return {
+                "type": "herbert",
+                "base": "allegro/herbert-klej-cased-tokenizer-v1",
+                "model": "HERBERT",
+            }  # Verified name is "allegro/herbert-klej-cased-tokenizer-v1"
+        elif config()["models"]["layoutlm"]:
+            return {
+                "type": "layoutlm",
+                "base": "microsoft/layoutlm-base-uncased",
+                "model": "LAYOUTLM",
+            }  # Confirmed
+        elif config()["models"]["layoutlmv2"]:
+            return {
+                "type": "layoutlmv2",
+                "base": "microsoft/layoutlmv2-base-uncased",
+                "model": "LAYOUTLMV2",
+            }  # Confirmed
+        elif config()["models"]["longformer"]:
+            return {
+                "type": "longformer",
+                "base": "allenai/longformer-base-4096",
+                "model": "LONGFORMER",
+            }  # Confirmed
+        elif config()["models"]["mpnet"]:
+            return {
+                "type": "mpnet",
+                "base": "microsoft/mpnet-base",
+                "model": "MPNET",
+            }  # Confirmed
+        elif config()["models"]["rembert"]:
+            return {
+                "type": "rembert",
+                "base": "google/rembert",
+                "model": "REMBERT",
+            }  # Confirmed
+        elif config()["models"]["roberta"]:
+            return {
+                "type": "roberta",
+                "base": "roberta-base",
+                "model": "ROBERTA",
+            }  # Confirmed
+        elif config()["models"]["squeezebert"]:
+            return {
+                "type": "squeezebert",
+                "base": "squeezebert/squeezebert-uncased",
+                "model": "SQUEEZEBERT",
+            }  # Confirmed: "squeezebert/squeezebert-uncased"
+        elif config()["models"]["xlm"]:
+            return {
+                "type": "xlm",
+                "base": "xlm-roberta-base",
+                "model": "XLM",
+            }  # Confirmed
+        elif config()["models"]["xlmroberta"]:
+            return {
+                "type": "xlmroberta",
+                "base": "xlm-roberta-base",
+                "model": "XLMROBERTA",
+            }  # Confirmed
+        elif config()["models"]["xlnet"]:
+            return {
+                "type": "xlnet",
+                "base": "xlnet-base-cased",
+                "model": "XLNET",
+            }  # Confirmed
         else:
             raise ValueError(f"Unknown model type: {self.model_type}")
-
-        
 
     def train(self, df_train, df_test=None):
         # Ensure that df_train contains 'text' and 'labels' columns
@@ -142,8 +217,18 @@ class Trainer:
         best_score = 0
         best_model = None
 
+        print(
+            "*" * 10,
+            """The model {} is being as the base model with KFold {}.""".format(
+                self.select_the_model()["model"], self.n_splits
+            ),
+            "*" * 10,
+        )
+
         for train_index, val_index in kf.split(df_train):
-            print(f"\n\n############################ Fold - {fold} ############################ \n\n")
+            print(
+                f"\n\n############################ Fold - {fold} ############################ \n\n"
+            )
             train_data = df_train.iloc[train_index].reset_index(drop=True)
             val_data = df_train.iloc[val_index].reset_index(drop=True)
 
@@ -220,7 +305,9 @@ class Trainer:
 
         # Save the best model
         best_model.save_model("best_model/")
-        print(f"The best model was from fold {best_fold} with a score of {best_score:.4f}")
+        print(
+            f"The best model was from fold {best_fold} with a score of {best_score:.4f}"
+        )
 
         # Evaluate the best model on the test set
         if df_test is not None:
@@ -229,6 +316,14 @@ class Trainer:
     def _normal_training(self, df_train, df_test):
         # Update output directory
         self.model_args.output_dir = self.model_args.output_dir
+
+        print(
+            "*" * 10,
+            """The model {} is being as the base model.""".format(
+                self.select_the_model()["model"]
+            ),
+            "*" * 10,
+        )
 
         # Create a ClassificationModel
         model = ClassificationModel(
@@ -261,7 +356,9 @@ class Trainer:
             )
             df_test["labels"] = df_test["labels"].fillna(-1).astype(int)
             if -1 in df_test["labels"].values:
-                raise ValueError("Some labels in df_test are not in the training label mapping.")
+                raise ValueError(
+                    "Some labels in df_test are not in the training label mapping."
+                )
         else:
             # Ensure labels are integers
             df_test["labels"] = df_test["labels"].astype(int)
@@ -291,7 +388,9 @@ class Trainer:
     def _plot_confusion_matrix(self, true_labels, predictions, title, filename):
         cm = confusion_matrix(true_labels, predictions)
         cm_df = pd.DataFrame(
-            cm, index=list(self.label_mapping.values()), columns=list(self.label_mapping.values())
+            cm,
+            index=list(self.label_mapping.values()),
+            columns=list(self.label_mapping.values()),
         )
 
         sns.set(context="paper", font_scale=1.7)
@@ -404,10 +503,12 @@ if __name__ == "__main__":
     df_test = df_test.rename(columns={"label": "labels"})
 
     # Ensure that the DataFrames have the necessary columns
-    assert "text" in df_train.columns and "labels" in df_train.columns, \
-        "df_train must contain 'text' and 'labels' columns."
-    assert "text" in df_test.columns and "labels" in df_test.columns, \
-        "df_test must contain 'text' and 'labels' columns."
+    assert (
+        "text" in df_train.columns and "labels" in df_train.columns
+    ), "df_train must contain 'text' and 'labels' columns."
+    assert (
+        "text" in df_test.columns and "labels" in df_test.columns
+    ), "df_test must contain 'text' and 'labels' columns."
 
     trainer.train(df_train, df_test)
     trainer.save_model_args()

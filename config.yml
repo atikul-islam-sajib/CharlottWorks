@@ -31,7 +31,6 @@ models:
   layoutlmv2: False
   longformer: False
   mpnet: False
-  mobilebert: False
   rembert: False
   roberta: False
   squeezebert: False
