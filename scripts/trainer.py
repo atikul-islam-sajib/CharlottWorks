@@ -535,7 +535,7 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 logging.basicConfig(level=logging.ERROR)
 
 sys.path.append("./scripts")
-from utils import config, device_init  # Ensure this correctly imports your config function
+from utils import config, device_init, models_information  # Ensure this correctly imports your config function
 
 
 class Trainer:
@@ -584,30 +584,11 @@ class Trainer:
 
         if not self.model_type:
             raise ValueError("No model set to True in the config file under 'models'.")
-
-        # Set default model_name based on model_type
-        model_name_defaults = {
-            'albert': 'albert-base-v2',
-            'bert': 'bert-base-uncased',
-            'bertweet': 'vinai/bertweet-base',
-            'bigbird': 'google/bigbird-roberta-base',
-            'camembert': 'camembert-base',
-            'deberta': 'microsoft/deberta-base',
-            'distilbert': 'distilbert-base-uncased',
-            'electra': 'google/electra-base-discriminator',
-            'flaubert': 'flaubert/flaubert_base_cased',
-            'herbert': 'allegro/herbert-base-cased',
-            'layoutlm': 'microsoft/layoutlm-base-uncased',
-            'layoutlmv2': 'microsoft/layoutlmv2-base-uncased',
-            'longformer': 'allenai/longformer-base-4096',
-            'mpnet': 'microsoft/mpnet-base',
-            'rembert': 'google/rembert',
-            'roberta': 'roberta-base',
-            'squeezebert': 'squeezebert/squeezebert-uncased',
-            'xlm': 'xlm-mlm-17-1280',
-            'xlmroberta': 'xlm-roberta-base',
-            'xlnet': 'xlnet-base-cased'
-        }
+        try:
+            # Set default model_name based on model_type
+            model_name_defaults = models_information()
+        except Exception as e:
+            raise ValueError(f"Error loading model information: {e}".capitalize())
 
         self.model_name = model_name_defaults.get(self.model_type)
 
