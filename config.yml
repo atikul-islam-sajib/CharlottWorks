@@ -4,7 +4,7 @@ path:
   output_dir: './data/processed'
 
 trainer:
-  num_train_epochs: 5
+  num_train_epochs: 1
   learning_rate: 8.521786512851659e-05
   train_batch_size: 8
   eval_batch_size: 24

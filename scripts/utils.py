@@ -9,8 +9,8 @@ def config():
         return yaml.safe_load(file)
     
     
-def device_init(self, device: str = "cuda"):
+def device_init(device: str = "cuda"):
     if device == "cuda" and torch.cuda.is_available():
-        self.device = torch.device("cuda")
+        return torch.device("cuda")
     else:
-        self.device = torch.device("cpu")
+        return torch.device("cpu")
