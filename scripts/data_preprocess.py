@@ -98,4 +98,12 @@ class DataProcessor:
 
 
 if __name__ == "__main__":
-    pass
+    processor = DataProcessor(
+        train_path='../data/ground_truth_train.csv',
+        test_path='../data/ground_truth_test.csv',
+        output_dir='../data/processed'
+    )
+
+    processor.run_preprocessing()
+    X_train, y_train, X_test, y_test = processor.get_data_splits()
+
