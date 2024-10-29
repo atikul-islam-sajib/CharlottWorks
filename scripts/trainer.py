@@ -1,3 +1,4 @@
+# Import necessary libraries
 import pandas as pd
 import numpy as np
 import os
@@ -12,6 +13,7 @@ import sys
 
 sys.path.append("./scripts")
 from utils import config, device_init
+
 
 class Trainer:
     def __init__(
@@ -50,7 +52,7 @@ class Trainer:
         ), "df_train must contain 'text' and 'label' columns."
 
         # Encode labels if they are not integers
-        if df_train["label"].dtype not in [np.int64, np.int32]:
+        if df_train["label"].dtype not in [np.int64, np.int32, int]:
             df_train["label"], uniques = pd.factorize(df_train["label"])
             label_mapping = dict(enumerate(uniques))
         else:
@@ -65,15 +67,16 @@ class Trainer:
         os.makedirs("results", exist_ok=True)
 
         if self.use_kfold:
-            self._kfold_training(df_train)
+            self._kfold_training(df_train, df_test)
         else:
             self._normal_training(df_train, df_test)
 
-        # Save label mapping
+        # Save label mapping with string keys
+        label_mapping_str_keys = {str(k): v for k, v in self.label_mapping.items()}
         with open("results/label_mapping.json", "w") as f:
-            json.dump(self.label_mapping, f)
+            json.dump(label_mapping_str_keys, f)
 
-    def _kfold_training(self, df_train):
+    def _kfold_training(self, df_train, df_test):
         kf = KFold(n_splits=self.n_splits, shuffle=True, random_state=self.random_state)
         all_predictions = []
         all_true_labels = []
@@ -156,6 +159,10 @@ class Trainer:
         best_model.save_model("best_model/")
         print(f"The best model was from fold {best_fold} with a score of {best_score:.4f}")
 
+        # Evaluate the best model on the test set
+        if df_test is not None:
+            self._evaluate_on_test_set(best_model, df_test)
+
     def _normal_training(self, df_train, df_test):
         # Update output directory
         self.model_args.output_dir = self.model_args.output_dir
@@ -177,27 +184,43 @@ class Trainer:
 
         # Predict on test set
         if df_test is not None:
-            assert (
-                "text" in df_test.columns and "label" in df_test.columns
-            ), "df_test must contain 'text' and 'label' columns."
-            test_texts = df_test["text"].tolist()
-            test_labels = df_test["label"].tolist()
-            predictions, raw_outputs = model.predict(test_texts)
+            self._evaluate_on_test_set(model, df_test)
 
-            # Save classification report
-            report = classification_report(
-                test_labels, predictions, target_names=self.label_mapping.values()
-            )
-            with open("results/classification_report_test_set.txt", "w") as f:
-                f.write(report)
+    def _evaluate_on_test_set(self, model, df_test):
+        assert (
+            "text" in df_test.columns and "label" in df_test.columns
+        ), "df_test must contain 'text' and 'label' columns."
 
-            # Plot confusion matrix
-            self._plot_confusion_matrix(
-                test_labels,
-                predictions,
-                "Confusion Matrix - Test Set",
-                "results/confusion_matrix_test_set",
+        # If labels are not numeric, factorize using the same mapping
+        if df_test["label"].dtype not in [np.int64, np.int32, int]:
+            df_test["label"] = df_test["label"].map(
+                {v: int(k) for k, v in self.label_mapping.items()}
             )
+            df_test["label"] = df_test["label"].fillna(-1).astype(int)
+            if -1 in df_test["label"].values:
+                raise ValueError("Some labels in df_test are not in the training label mapping.")
+        else:
+            # Ensure labels are integers
+            df_test["label"] = df_test["label"].astype(int)
+
+        test_texts = df_test["text"].tolist()
+        test_labels = df_test["label"].tolist()
+        predictions, raw_outputs = model.predict(test_texts)
+
+        # Save classification report
+        report = classification_report(
+            test_labels, predictions, target_names=self.label_mapping.values()
+        )
+        with open("results/classification_report_test_set.txt", "w") as f:
+            f.write(report)
+
+        # Plot confusion matrix
+        self._plot_confusion_matrix(
+            test_labels,
+            predictions,
+            "Confusion Matrix - Test Set",
+            "results/confusion_matrix_test_set",
+        )
 
     def _plot_confusion_matrix(self, true_labels, predictions, title, filename):
         cm = confusion_matrix(true_labels, predictions)
@@ -228,6 +251,7 @@ class Trainer:
 
         with open("results/model_args.json", "w") as f:
             json.dump(model_args_dict, f, indent=4)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Model Training Script")
