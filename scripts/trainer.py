@@ -39,6 +39,10 @@ class Trainer:
         self.model_args.output_dir = output_dir
         self.model_args.overwrite_output_dir = overwrite_output_dir
 
+        # Specify the label column name
+        self.model_args.labels_column = "label"
+        self.model_args.regression = False  # Ensure we're doing classification
+
         self.device = device
         self.use_cuda = device_init(device=device)
         self.use_kfold = use_kfold
@@ -87,8 +91,8 @@ class Trainer:
 
         for train_index, val_index in kf.split(df_train):
             print(f"Fold {fold}")
-            train_data = df_train.iloc[train_index]
-            val_data = df_train.iloc[val_index]
+            train_data = df_train.iloc[train_index].reset_index(drop=True)
+            val_data = df_train.iloc[val_index].reset_index(drop=True)
 
             # Update output directory for each fold
             self.model_args.output_dir = f"outputs/fold_{fold}/"
@@ -103,7 +107,7 @@ class Trainer:
             )
 
             # Train the model
-            model.train_model(train_data[["text", "label"]])
+            model.train_model(train_data)
 
             # Predict on validation set
             val_texts = val_data["text"].tolist()
@@ -125,7 +129,10 @@ class Trainer:
 
             # Save classification report
             report = classification_report(
-                val_labels, predictions, target_names=self.label_mapping.values()
+                val_labels,
+                predictions,
+                target_names=list(self.label_mapping.values()),
+                zero_division=0,
             )
             with open(f"results/classification_report_fold_{fold}.txt", "w") as f:
                 f.write(report)
@@ -142,7 +149,10 @@ class Trainer:
 
         # Save overall classification report
         overall_report = classification_report(
-            all_true_labels, all_predictions, target_names=self.label_mapping.values()
+            all_true_labels,
+            all_predictions,
+            target_names=list(self.label_mapping.values()),
+            zero_division=0,
         )
         with open("results/classification_report_overall.txt", "w") as f:
             f.write(overall_report)
@@ -177,7 +187,7 @@ class Trainer:
         )
 
         # Train the model
-        model.train_model(df_train[["text", "label"]])
+        model.train_model(df_train)
 
         # Save the model
         model.save_model("best_model/")
@@ -191,7 +201,7 @@ class Trainer:
             "text" in df_test.columns and "label" in df_test.columns
         ), "df_test must contain 'text' and 'label' columns."
 
-        # If labels are not numeric, factorize using the same mapping
+        # If labels are not numeric, map using the label_mapping
         if df_test["label"].dtype not in [np.int64, np.int32, int]:
             df_test["label"] = df_test["label"].map(
                 {v: int(k) for k, v in self.label_mapping.items()}
@@ -209,7 +219,10 @@ class Trainer:
 
         # Save classification report
         report = classification_report(
-            test_labels, predictions, target_names=self.label_mapping.values()
+            test_labels,
+            predictions,
+            target_names=list(self.label_mapping.values()),
+            zero_division=0,
         )
         with open("results/classification_report_test_set.txt", "w") as f:
             f.write(report)
@@ -225,7 +238,7 @@ class Trainer:
     def _plot_confusion_matrix(self, true_labels, predictions, title, filename):
         cm = confusion_matrix(true_labels, predictions)
         cm_df = pd.DataFrame(
-            cm, index=self.label_mapping.values(), columns=self.label_mapping.values()
+            cm, index=list(self.label_mapping.values()), columns=list(self.label_mapping.values())
         )
 
         sns.set(context="paper", font_scale=1.7)
@@ -332,6 +345,12 @@ if __name__ == "__main__":
     # Load data
     df_train = pd.read_csv("./data/processed/processed_train.csv")
     df_test = pd.read_csv("./data/processed/processed_test.csv")
+
+    # Ensure that the DataFrames have the necessary columns
+    assert "text" in df_train.columns and "label" in df_train.columns, \
+        "df_train must contain 'text' and 'label' columns."
+    assert "text" in df_test.columns and "label" in df_test.columns, \
+        "df_test must contain 'text' and 'label' columns."
 
     trainer.train(df_train, df_test)
     trainer.save_model_args()
