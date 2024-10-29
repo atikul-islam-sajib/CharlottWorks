@@ -1,61 +1,17 @@
-# from simpletransformers.classification import ClassificationModel, ClassificationArgs
-# import pandas as pd
-# import re
-# from sklearn.model_selection import GroupShuffleSplit
-# import torch
-# from sklearn.metrics import (
-#     mean_squared_error,
-#     f1_score,
-#     accuracy_score,
-#     classification_report,
-#     confusion_matrix,
-# )
-# import optuna
-# import seaborn as sns
-# import matplotlib.pyplot as plt
-# import os
-# import json
-
-
-# class Trainer:
-#     def __init__(
-#         self,
-#         num_train_epochs: int = 5,
-#         learning_rate: float = 8.521786512851659e-05,
-#         train_batch_size: int = 8,
-#         eval_batch_size: int = 24,
-#         max_seq_length: int = 512,
-#         output_dir: str = "outputs/",
-#         overwrite_output_dir: bool = True,
-#     ):
-#         self.num_train_epochs = num_train_epochs
-#         self.learning_rate = learning_rate
-#         self.train_batch_size = train_batch_size
-#         self.eval_batch_size = eval_batch_size
-#         self.max_seq_length = max_seq_length
-#         self.output_dir = output_dir
-#         self.overwrite_output_dir = overwrite_output_dir
-
-
-# Import necessary libraries
 import pandas as pd
 import numpy as np
 import os
 import json
 from sklearn.model_selection import KFold
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 import seaborn as sns
 import matplotlib.pyplot as plt
 from simpletransformers.classification import ClassificationModel, ClassificationArgs
-import torch
 import argparse
-
 import sys
 
 sys.path.append("./scripts")
-
 from utils import config, device_init
-
 
 class Trainer:
     def __init__(
@@ -113,11 +69,18 @@ class Trainer:
         else:
             self._normal_training(df_train, df_test)
 
+        # Save label mapping
+        with open("results/label_mapping.json", "w") as f:
+            json.dump(self.label_mapping, f)
+
     def _kfold_training(self, df_train):
         kf = KFold(n_splits=self.n_splits, shuffle=True, random_state=self.random_state)
         all_predictions = []
         all_true_labels = []
         fold = 1
+
+        best_score = 0
+        best_model = None
 
         for train_index, val_index in kf.split(df_train):
             print(f"Fold {fold}")
@@ -147,6 +110,15 @@ class Trainer:
             # Append results
             all_predictions.extend(predictions)
             all_true_labels.extend(val_labels)
+
+            # Calculate validation score
+            fold_score = accuracy_score(val_labels, predictions)
+
+            # Save the model if it's the best so far
+            if fold_score > best_score:
+                best_score = fold_score
+                best_model = model
+                best_fold = fold
 
             # Save classification report
             report = classification_report(
@@ -180,6 +152,10 @@ class Trainer:
             "results/confusion_matrix_overall",
         )
 
+        # Save the best model
+        best_model.save_model("best_model/")
+        print(f"The best model was from fold {best_fold} with a score of {best_score:.4f}")
+
     def _normal_training(self, df_train, df_test):
         # Update output directory
         self.model_args.output_dir = self.model_args.output_dir
@@ -195,6 +171,9 @@ class Trainer:
 
         # Train the model
         model.train_model(df_train[["text", "label"]])
+
+        # Save the model
+        model.save_model("best_model/")
 
         # Predict on test set
         if df_test is not None:
@@ -250,68 +229,65 @@ class Trainer:
         with open("results/model_args.json", "w") as f:
             json.dump(model_args_dict, f, indent=4)
 
-
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Model Training Script".title())
+    parser = argparse.ArgumentParser(description="Model Training Script")
     parser.add_argument(
         "--num_train_epochs",
         type=int,
         default=config()["trainer"]["num_train_epochs"],
-        help="Define the number of training epochs".capitalize(),
+        help="Define the number of training epochs",
     )
     parser.add_argument(
         "--learning_rate",
         type=float,
         default=config()["trainer"]["learning_rate"],
-        help="Define the learning rate".capitalize(),
+        help="Define the learning rate",
     )
     parser.add_argument(
         "--train_batch_size",
         type=int,
         default=config()["trainer"]["train_batch_size"],
-        help="Define the training batch size".capitalize(),
+        help="Define the training batch size",
     )
     parser.add_argument(
         "--eval_batch_size",
         type=int,
         default=config()["trainer"]["eval_batch_size"],
-        help="Define the evaluation batch size".capitalize(),
+        help="Define the evaluation batch size",
     )
     parser.add_argument(
         "--max_seq_length",
         type=int,
         default=config()["trainer"]["max_seq_length"],
-        help="Define the maximum sequence length".capitalize(),
+        help="Define the maximum sequence length",
     )
     parser.add_argument(
         "--output_dir",
         type=str,
         default=config()["trainer"]["output_dir"],
-        help="Define the output directory".capitalize(),
+        help="Define the output directory",
     )
     parser.add_argument(
         "--overwrite_output_dir",
-        type=bool,
-        default=config()["trainer"]["overwrite_output_dir"],
-        help="Define whether to overwrite the output directory".capitalize(),
+        action='store_true',
+        help="Overwrite the output directory",
     )
     parser.add_argument(
         "--device",
         type=str,
         default=config()["trainer"]["device"],
-        help="Define the device to use".capitalize(),
+        help="Define the device to use",
     )
     parser.add_argument(
         "--use_kfold",
-        type=bool,
-        default=config()["trainer"]["use_kfold"],
-        help="Define whether to use k-fold cross-validation".capitalize(),
+        action='store_true',
+        help="Use k-fold cross-validation",
     )
     parser.add_argument(
         "--n_splits",
         type=int,
         default=config()["trainer"]["n_splits"],
-        help="Define the number of splits for k-fold cross-validation".capitalize(),
+        help="Define the number of splits for k-fold cross-validation",
     )
 
     args = parser.parse_args()
@@ -329,12 +305,9 @@ if __name__ == "__main__":
         n_splits=args.n_splits,
     )
 
-    df_train = "./data/processed/processed_train.csv"
-    df_test = "./data/processed/processed_test.csv"
-    
-    trainer.train(df_train)
-    trainer.save_model_args()
-    
-    
+    # Load data
+    df_train = pd.read_csv("./data/processed/processed_train.csv")
+    df_test = pd.read_csv("./data/processed/processed_test.csv")
 
-    
+    trainer.train(df_train, df_test)
+    trainer.save_model_args()
