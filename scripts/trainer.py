@@ -51,6 +51,7 @@ import torch
 import argparse
 
 import sys
+
 sys.path.append("./scripts")
 
 from utils import config, device_init
@@ -248,7 +249,84 @@ class Trainer:
 
         with open("results/model_args.json", "w") as f:
             json.dump(model_args_dict, f, indent=4)
-            
-            
+
+
 if __name__ == "__main__":
-    
+    parser = argparse.ArgumentParser(description="Model Training Script".title())
+    parser.add_argument(
+        "--num_train_epochs",
+        type=int,
+        default=config()["trainer"]["num_train_epochs"],
+        help="Define the number of training epochs".capitalize(),
+    )
+    parser.add_argument(
+        "--learning_rate",
+        type=float,
+        default=config()["trainer"]["learning_rate"],
+        help="Define the learning rate".capitalize(),
+    )
+    parser.add_argument(
+        "--train_batch_size",
+        type=int,
+        default=config()["trainer"]["train_batch_size"],
+        help="Define the training batch size".capitalize(),
+    )
+    parser.add_argument(
+        "--eval_batch_size",
+        type=int,
+        default=config()["trainer"]["eval_batch_size"],
+        help="Define the evaluation batch size".capitalize(),
+    )
+    parser.add_argument(
+        "--max_seq_length",
+        type=int,
+        default=config()["trainer"]["max_seq_length"],
+        help="Define the maximum sequence length".capitalize(),
+    )
+    parser.add_argument(
+        "--output_dir",
+        type=str,
+        default=config()["trainer"]["output_dir"],
+        help="Define the output directory".capitalize(),
+    )
+    parser.add_argument(
+        "--overwrite_output_dir",
+        type=bool,
+        default=config()["trainer"]["overwrite_output_dir"],
+        help="Define whether to overwrite the output directory".capitalize(),
+    )
+    parser.add_argument(
+        "--device",
+        type=str,
+        default=config()["trainer"]["device"],
+        help="Define the device to use".capitalize(),
+    )
+    parser.add_argument(
+        "--use_kfold",
+        type=bool,
+        default=config()["trainer"]["use_kfold"],
+        help="Define whether to use k-fold cross-validation".capitalize(),
+    )
+    parser.add_argument(
+        "--n_splits",
+        type=int,
+        default=config()["trainer"]["n_splits"],
+        help="Define the number of splits for k-fold cross-validation".capitalize(),
+    )
+
+    args = parser.parse_args()
+
+    trainer = Trainer(
+        num_train_epochs=args.num_train_epochs,
+        learning_rate=args.learning_rate,
+        train_batch_size=args.train_batch_size,
+        eval_batch_size=args.eval_batch_size,
+        max_seq_length=args.max_seq_length,
+        output_dir=args.output_dir,
+        overwrite_output_dir=args.overwrite_output_dir,
+        device=args.device,
+        use_kfold=args.use_kfold,
+        n_splits=args.n_splits,
+    )
+
+    trainer.train(df_train)
